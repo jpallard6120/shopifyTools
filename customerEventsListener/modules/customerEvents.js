@@ -12,7 +12,7 @@ const customerEvents = () => {
           window.dataLayer = window.dataLayer || [];
           window.dataLayer.push({
 	          event: event.data.event_name,
-	          ga4Data: json_data
+	          ecommerce: json_data
           });
           console.log('Event name is: ', event.data.event_name)
           console.log('Data is: ', json_data)
@@ -42,8 +42,8 @@ const customerEventsHashed = () => {
 
   addEventListener('message', (event) => {
      if (JSON.stringify(event.data).includes("shopify_pixel_event")) {
-      let json_data = {}
         try {
+           let json_data = {}
            let json_data = JSON.parse(event.data.json)
            Promise.all([
               hashPII(json_data.enhanced_conversions.email)
@@ -59,7 +59,7 @@ const customerEventsHashed = () => {
          window.dataLayer = window.dataLayer || [];
          window.dataLayer.push({
           event: event.data.event_name,
-          data: json_data
+          ecommerce: json_data
          });
          console.log('Main Window Event name is: ', event.data.event_name)
          console.log('Data is: ', json_data)
