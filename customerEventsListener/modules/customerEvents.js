@@ -2,9 +2,9 @@ const customerEvents = () => {
    addEventListener('message', (event) => { 
       if (JSON.stringify(event.data).includes("shopify_pixel_event")) {
         try {
-          var json_data = JSON.parse(event.data.json)
+          var ecomData = JSON.parse(event.data.json)
         } catch (SyntaxError) {
-          var json_data = {}
+          var ecomData = {}
         }
         // let events = ['view_item', 'view_item_list']
         // if (events.some(e => event.data.event_name.includes(e))) {
@@ -12,10 +12,10 @@ const customerEvents = () => {
           window.dataLayer = window.dataLayer || [];
           window.dataLayer.push({
 	          event: event.data.event_name,
-	          ecommerce: json_data
+	          ecommerce: ecomData
           });
           console.log('Event name is: ', event.data.event_name)
-          console.log('Data is: ', json_data)
+          console.log('ecomData is: ', ecomData)
         }
     }
   });
@@ -43,26 +43,26 @@ const customerEventsHashed = () => {
   addEventListener('message', (event) => {
      if (JSON.stringify(event.data).includes("shopify_pixel_event")) {
         try {
-           let json_data = {}
-           let json_data = JSON.parse(event.data.json)
+           let ecomData = {}
+           let ecomData = JSON.parse(event.data.json)
            Promise.all([
-              hashPII(json_data.enhanced_conversions.email)
+              hashPII(ecomData.enhanced_conversions.email)
                 .then(result => {
-                   json_data.enhanced_conversions.address.sha_256_email_address = result;
+                  ecomData.enhanced_conversions.address.sha_256_email_address = result;
                 }),
-              hashPII(json_data.enhanced_conversions.address.phone_number)
+              hashPII(ecomData.enhanced_conversions.address.phone_number)
                 .then(result => {
-                   json_data.enhanced_conversions.address.sha_256_phone_number = result;
+                  ecomData.enhanced_conversions.address.sha_256_phone_number = result;
                 })
      ]).then(() => {
         if (typeof(event.data.event_name) !== 'undefined') {
          window.dataLayer = window.dataLayer || [];
          window.dataLayer.push({
           event: event.data.event_name,
-          ecommerce: json_data
+          ecommerce: ecomData
          });
          console.log('Main Window Event name is: ', event.data.event_name)
-         console.log('Data is: ', json_data)
+         console.log('ecomData is: ', ecomData)
         }
      });
         } catch (SyntaxError) {
