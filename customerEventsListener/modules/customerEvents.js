@@ -2,7 +2,7 @@ const customerEvents = () => {
    addEventListener('message', (event) => { 
       if (JSON.stringify(event.data).includes("shopify_pixel_event")) {
         try {
-          var ecomData = JSON.parse(event.data.json)
+          var ecomData = JSON.parse(event.data.ecomData)
         } catch (SyntaxError) {
           var ecomData = {}
         }
@@ -43,7 +43,7 @@ const customerEventsHashed = () => {
   addEventListener('message', (event) => {
      if (JSON.stringify(event.data).includes("shopify_pixel_event")) {
         try {
-           let ecomData = JSON.parse(event.data.json)
+           let ecomData = JSON.parse(event.data.ecomData)
            Promise.all([
               hashPII(ecomData.enhanced_conversions.email)
                 .then(result => {
