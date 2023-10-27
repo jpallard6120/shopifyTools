@@ -43,7 +43,6 @@ const customerEventsHashed = () => {
   addEventListener('message', (event) => {
      if (JSON.stringify(event.data).includes("shopify_pixel_event")) {
         try {
-           let ecomData = {}
            let ecomData = JSON.parse(event.data.json)
            Promise.all([
               hashPII(ecomData.enhanced_conversions.email)
