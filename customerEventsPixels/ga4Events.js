@@ -22,7 +22,8 @@ analytics.subscribe("product_viewed", async (event) => {
       return {
         currency: variant.price.currencyCode,
         value: variant.price.amount, // Assuming value should match the price amount
-        items: [transformVariantToItem(variant)]
+        items: [transformVariantToItem(variant)],
+        data_source: 'web' // Not a standard GA4 dimension. Needs to be added as CD. 
       };
     }
     const transformedData = transformDataToViewItem(variant);
@@ -46,7 +47,8 @@ analytics.subscribe("product_viewed", async (event) => {
       return {
         item_list_id: data.collection.id,
         item_list_name: data.collection.title,
-        items: items
+        items: items,
+        data_source: 'web' // Not a standard GA4 dimension. Needs to be added as CD. 
       };
     }
     const transformedData = transformDataToCollectionViewed(event.data);
@@ -69,7 +71,8 @@ analytics.subscribe("product_viewed", async (event) => {
       return {
         currency: cartLine.cost.totalAmount.currencyCode,
         value: cartLine.cost.totalAmount.amount,
-        items: [transformVariantToItem(variant, 0, cartLine.quantity)]
+        items: [transformVariantToItem(variant, 0, cartLine.quantity)],
+        data_source: 'web' // Not a standard GA4 dimension. Needs to be added as CD. 
       };
     }
     
@@ -111,7 +114,8 @@ analytics.subscribe("product_viewed", async (event) => {
       return {
         currency: cartCurrency,
         value: cartValue,
-        items: items
+        items: items,
+        data_source: 'web' // Not a standard GA4 dimension. Needs to be added as CD. 
       };
     }
     const cartData = event.data.cart

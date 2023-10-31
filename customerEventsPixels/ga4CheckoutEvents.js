@@ -57,7 +57,8 @@ function transformVariantToItem(variant, index = 0, quantity = 1) {
     return {
     currency: checkoutCurrency,
     value: checkoutValue,
-    items: checkoutItems
+    items: checkoutItems,
+    data_source: 'web' // Not a standard GA4 dimension. Needs to be added as CD. 
     };
     }
 
@@ -72,18 +73,19 @@ analytics.subscribe("checkout_started", async (event) => {
 
 analytics.subscribe("checkout_shipping_info_submitted", async (event) => {
     console.log('add_shipping_info : ', event)
-    const transformedData = transformCheckoutData(event.data.checkout);
+    let transformedData = transformCheckoutData(event.data.checkout);
     gtag('event', 'add_shipping_info', transformedData);
     // Need to add user data
-    // Need to add shipping_method
-});
+    // shipping_tier not included as it's not part of the Customer Events data structure
 
 
 analytics.subscribe("checkout_completed", async (event) => {
     console.log('purchase : ', event)
-    const transformedData = transformCheckoutData(event.data.checkout);
+    const checkoutData = event.data.checkout
+    let transformedData = transformCheckoutData(checkoutData);
+    transformedData.transaction_id = checkoutData.order.id
+    transformedData.shipping = checkoutData.shippingLine.price.amount
+    transformedData.tax = checkoutData.totalTax.amount
     gtag('event', 'purchase', transformedData);
     // Need to add user data
-    // Need to add source data (to differentiate from webhook events)
 });
-
