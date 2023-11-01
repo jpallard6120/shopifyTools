@@ -1,9 +1,11 @@
-// Initialize gtag.js for subsequent events
-// This only works in a first party context, where the GA4 Client is sGTM is set to serve gtag.js
+// Variables to set for the whole script
 var measurementID = 'G-LBN6XJ9NHK'
 var serverContainerURL = 'https://gtm.mailmasters.ca'
+var shouldHashPII = true
 // Remove debug_mode below for prod
 
+// Initialize gtag.js for subsequent events
+// This only works in a first party context, where the GA4 Client is sGTM is set to serve gtag.js
 const script = document.createElement('script');
 script.setAttribute('src', `https://gtm.mailmasters.ca/gtag/js?id=${measurementID}`);
 script.setAttribute('async', '');
@@ -19,7 +21,8 @@ gtag('config', measurementID, {
   'send_page_view': false,
   'debug_mode': true, // REMOVE THIS FOR PROD
   'server_container_url': serverContainerURL,
-  'allow_enhanced_conversions':true // This needs to be true to send user data
+  'allow_enhanced_conversions':true, // This needs to be true to send user data
+  'allow_google_signals': true 
 });
 
 //// FUNCTIONS DEFINITIONS
@@ -84,7 +87,7 @@ function transformVariantToItem(variant, index = 0, quantity = 1) {
 	}
 
   // Function to hash PII before sending to Google. 
-  // This is an async only function, which must be wrapper in a promise
+  // This is an async only function, which must be wrapped in a promise or use await statements
   async function hashPII(input) {
     input = String(input).trim(); // Remove leading and trailing spaces and convert to string
     if (input.length > 0) {
@@ -98,6 +101,42 @@ function transformVariantToItem(variant, index = 0, quantity = 1) {
        return undefined
     }
  }
+
+ // This function modifies the final userData object to hash PII data
+ async function transformPIIUserData(userData) {
+  let hashedUserData = JSON.parse(JSON.stringify(userData)); // Converting to string and then parsing to store hashedUserData as a copy instead of a reference
+  if (userData.email) {
+    hashedUserData.sha256_email = await hashPII(userData.email);
+  }
+  if (userData.phone_number) {
+    hashedUserData.sha256_phone_number = await hashPII(userData.phone_number);
+  }  
+
+  // Check if address is an array
+  if (Array.isArray(userData.address)) {
+    await Promise.all(hashedUserData.address.map(async (addr) => {
+      addr.sha256_first_name = await hashPII(addr.first_name);
+      addr.sha256_last_name = await hashPII(addr.last_name);
+      // Delete non hashed keys and values from addresses array
+      addr.first_name && delete addr.first_name
+      addr.last_name && delete addr.last_name
+    }));
+  } else {
+    // Handle the case where address is an object
+    hashedUserData.address.sha256_first_name = await hashPII(userData.address.first_name);
+    hashedUserData.address.sha256_last_name = await hashPII(userData.address.last_name);
+    // Delete non hashed keys and values from address object
+    hashedUserData.address.first_name && delete hashedUserData.address.first_name
+    hashedUserData.address.last_name && delete hashedUserData.address.last_name
+  }
+
+  // Strip non hashed PII within the top level of hashedUserData object 
+  hashedUserData.email && delete hashedUserData.email
+  hashedUserData.phone_number && delete hashedUserData.phone_number
+  // Return the result
+  return hashedUserData;
+}
+
 
 // START EVENTS TRACKING
 
@@ -127,11 +166,11 @@ analytics.subscribe("checkout_completed", async (event) => {
 
     //// Set User Data
     // Helper function to loop through keys within the Shopify address object
-    function transformUserAddressData (inputObject, outputObject, hashPII) {
+    function transformUserAddressData (inputObject, outputObject) {
       Object.keys(inputObject).forEach(key => {
         if (Object.keys(shopifyToGA4AddressKeys).includes(key)) {
             // Take action for keys that exist within shopifyToGA4AddressKeys
-            outputObject[shopifyToGA4AddressKeys[key]] = inputObject[key]
+              outputObject[shopifyToGA4AddressKeys[key]] = inputObject[key]
         }
       });
       console.log('Input object is: ', inputObject)
@@ -143,7 +182,7 @@ analytics.subscribe("checkout_completed", async (event) => {
       'city': 'city',
       'countryCode': 'country',
       'firstName': 'first_name', // sha256_first_name if hashed values
-      'lastName': 'last_name', //sha256_last_name is hashed values
+      'lastName': 'last_name', // sha256_last_name is hashed values
       'province': 'region',
       'zip': 'postal_code'
     }
@@ -166,15 +205,22 @@ analytics.subscribe("checkout_completed", async (event) => {
       userAddressData = [GA4BillingAddress, GA4ShippingAddress]
     }
 
-    const userData = {
-      ...(checkoutData.email ? { "email": checkoutData.email } : {}), // This will add the email key-value of checkoutData.email exists, and nothing otherwise. Need to add hashing logic. 
-      ...(checkoutData.phone ? { "phone_number": checkoutData.phone } : {}), // Need to add e164 formatting here. Need to add hashing logic. 
+    let userData = {
+      ...(checkoutData.email ? { "email": checkoutData.email } : {}), // This will add the email key-value of checkoutData.email exists, and nothing otherwise. // We can also add in logic to have multiple emails in an array here.
+      ...(checkoutData.phone ? { "phone_number": convertToE164(checkoutData.phone) } : {}), // We can also add in logic to have multiple phones in an array here.
       address: userAddressData
     }
 
-    console.log('Final User Data is: ', userData)
+    console.log('Final User Data before hashing is: ', userData)
 
-    gtag('set', 'user_data', userData)
+    // Modify data before sending to Google, if PII flag is true.
+    if (shouldHashPII) {
+      hashedUserData = await transformPIIUserData(userData)
+      console.log('Final User Data after hashing is: ', hashedUserData)
+      gtag('set', 'user_data', hashedUserData)
+    } else {
+      gtag('set', 'user_data', userData)
+    }
 
     // Send the purchase event
     gtag('event', 'purchase', transformedData);
