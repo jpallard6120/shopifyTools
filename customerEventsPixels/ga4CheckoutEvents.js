@@ -1,13 +1,13 @@
 // Variables to set for the whole script
 var measurementID = 'G-LBN6XJ9NHK'
-var serverContainerURL = 'https://gtm.mailmasters.ca'
+var serverContainerURL = 'https://gtm.mailmasters.ca' // No ending forward slash
 var shouldHashPII = true
 // Remove debug_mode below for prod
 
 // Initialize gtag.js for subsequent events
 // This only works in a first party context, where the GA4 Client is sGTM is set to serve gtag.js
 const script = document.createElement('script');
-script.setAttribute('src', `https://gtm.mailmasters.ca/gtag/js?id=${measurementID}`);
+script.setAttribute('src', `${serverContainerURL}/gtag/js?id=${measurementID}`);
 script.setAttribute('async', '');
 document.head.appendChild(script);
 
