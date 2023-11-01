@@ -202,9 +202,16 @@ analytics.subscribe("checkout_started", async (event) => {
 
 analytics.subscribe("checkout_shipping_info_submitted", async (event) => {
     console.log('add_shipping_info : ', event)
+
+    // Set user data
+    const checkoutData = event.data.checkout
+    processedUserData = await createUserData(checkoutData)
+    console.log('processedUserData is: ', processedUserData)
+    gtag('set', 'user_data', processedUserData)
+
+    // Send add_shipping info event
     let transformedData = transformCheckoutData(event.data.checkout);
     gtag('event', 'add_shipping_info', transformedData);
-    // Need to add user data
     // shipping_tier not included as it's not part of the Customer Events data structure
 });
 
