@@ -43,7 +43,7 @@ function transformVariantToItem(variant, index = 0, quantity = 1) {
     };
   }
 
-  // Transform Shopify checjout data structure to GA4 data structure
+  // Transform Shopify checkout data structure to GA4 data structure
   function transformCheckoutData(checkoutData) {
     console.log('Checkout data is: ', checkoutData)
     const checkoutValue = checkoutData.totalPrice.amount
@@ -137,9 +137,30 @@ function transformVariantToItem(variant, index = 0, quantity = 1) {
   return hashedUserData;
 }
 
+// Helper function to loop through keys within the Shopify address object, and transform them to GA4 style address objects
+function transformUserAddressData (inputObject) {
+  let outputObject = {}
+  const shopifyToGA4AddressKeys = {
+    'address1': 'street',
+    'city': 'city',
+    'countryCode': 'country',
+    'firstName': 'first_name', 
+    'lastName': 'last_name', 
+    'province': 'region',
+    'zip': 'postal_code'
+  }
+  Object.keys(inputObject).forEach(key => {
+    if (Object.keys(shopifyToGA4AddressKeys).includes(key)) {
+        // Take action for keys that exist within shopifyToGA4AddressKeys
+          outputObject[shopifyToGA4AddressKeys[key]] = inputObject[key]
+    }
+  });
+  console.log('Input object is: ', inputObject)
+  console.log('Output object is: ', outputObject)
+  return outputObject
+}
 
 // START EVENTS TRACKING
-
 analytics.subscribe("checkout_started", async (event) => {
     console.log('begin_checkout : ', event)
     const transformedData = transformCheckoutData(event.data.checkout);
@@ -165,35 +186,8 @@ analytics.subscribe("checkout_completed", async (event) => {
     transformedData.tax = checkoutData.totalTax.amount
 
     //// Set User Data
-    // Helper function to loop through keys within the Shopify address object
-    function transformUserAddressData (inputObject, outputObject) {
-      Object.keys(inputObject).forEach(key => {
-        if (Object.keys(shopifyToGA4AddressKeys).includes(key)) {
-            // Take action for keys that exist within shopifyToGA4AddressKeys
-              outputObject[shopifyToGA4AddressKeys[key]] = inputObject[key]
-        }
-      });
-      console.log('Input object is: ', inputObject)
-      console.log('Output object is: ', outputObject)
-    }
-
-    const shopifyToGA4AddressKeys = {
-      'address1': 'street',
-      'city': 'city',
-      'countryCode': 'country',
-      'firstName': 'first_name', // sha256_first_name if hashed values
-      'lastName': 'last_name', // sha256_last_name is hashed values
-      'province': 'region',
-      'zip': 'postal_code'
-    }
-
-    const shopifyBillingAddress = checkoutData.billingAddress
-    const shopifyShippingAddress = checkoutData.shippingAddress
-
-    let GA4BillingAddress = {}
-    let GA4ShippingAddress = {}
-    transformUserAddressData(shopifyBillingAddress, GA4BillingAddress)
-    transformUserAddressData(shopifyShippingAddress, GA4ShippingAddress)
+    const GA4BillingAddress = transformUserAddressData(checkoutData.billingAddress)
+    const GA4ShippingAddress = transformUserAddressData(checkoutData.shippingAddress)
 
     console.log('GA4BillingAddress is: ', GA4BillingAddress)
     console.log('GA4ShippingAddress is: ', GA4ShippingAddress)
