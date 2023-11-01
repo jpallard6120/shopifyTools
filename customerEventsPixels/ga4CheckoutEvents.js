@@ -45,7 +45,6 @@ function transformVariantToItem(variant, index = 0, quantity = 1) {
 
   // Transform Shopify checkout data structure to GA4 data structure
   function transformCheckoutData(checkoutData) {
-    console.log('Checkout data is: ', checkoutData)
     const checkoutValue = checkoutData.totalPrice.amount
     const checkoutCurrency = checkoutData.currencyCode
     const checkoutLines = checkoutData.lineItems
@@ -56,8 +55,6 @@ function transformVariantToItem(variant, index = 0, quantity = 1) {
         checkoutItem.quantity = checkoutLine.quantity
         checkoutItems.push(checkoutItem);
       });
-
-    console.log('checkoutItems are: ', checkoutItems)
 
     return {
     currency: checkoutCurrency,
@@ -155,8 +152,6 @@ function transformUserAddressData (inputObject) {
           outputObject[shopifyToGA4AddressKeys[key]] = inputObject[key]
     }
   });
-  console.log('Input object is: ', inputObject)
-  console.log('Output object is: ', outputObject)
   return outputObject
 }
 
@@ -164,9 +159,6 @@ function transformUserAddressData (inputObject) {
   async function createUserData(checkoutData) {
     const GA4BillingAddress = transformUserAddressData(checkoutData.billingAddress)
     const GA4ShippingAddress = transformUserAddressData(checkoutData.shippingAddress)
-
-    console.log('GA4BillingAddress is: ', GA4BillingAddress)
-    console.log('GA4ShippingAddress is: ', GA4ShippingAddress)
 
     let userAddressData; // init as empty to allow in definition of userData below
     if (JSON.stringify(GA4BillingAddress) == JSON.stringify(GA4ShippingAddress)) {
@@ -196,6 +188,7 @@ function transformUserAddressData (inputObject) {
 analytics.subscribe("checkout_started", async (event) => {
     console.log('begin_checkout : ', event)
     const transformedData = transformCheckoutData(event.data.checkout);
+    console.log('transformedData (checkout_started) is: ', transformedData)
     gtag('event', 'begin_checkout', transformedData);
 });
 
@@ -211,13 +204,14 @@ analytics.subscribe("checkout_shipping_info_submitted", async (event) => {
 
     // Send add_shipping info event
     let transformedData = transformCheckoutData(event.data.checkout);
+    console.log('transformedData (add_shipping_info) is: ', transformedData)
     gtag('event', 'add_shipping_info', transformedData);
     // shipping_tier not included as it's not part of the Customer Events data structure
 });
 
 analytics.subscribe("checkout_completed", async (event) => {
     console.log('purchase : ', event)
-    // Transaction Data
+    // Transaction Data unique to purchase event
     const checkoutData = event.data.checkout
     let transformedData = transformCheckoutData(checkoutData);
     transformedData.transaction_id = checkoutData.order.id
