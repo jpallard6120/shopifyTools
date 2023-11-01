@@ -160,6 +160,38 @@ function transformUserAddressData (inputObject) {
   return outputObject
 }
 
+  //// Transform User Data from Shopify to GA4 structure. Hash PII data if necessary. 
+  async function createUserData(checkoutData) {
+    const GA4BillingAddress = transformUserAddressData(checkoutData.billingAddress)
+    const GA4ShippingAddress = transformUserAddressData(checkoutData.shippingAddress)
+
+    console.log('GA4BillingAddress is: ', GA4BillingAddress)
+    console.log('GA4ShippingAddress is: ', GA4ShippingAddress)
+
+    let userAddressData; // init as empty to allow in definition of userData below
+    if (JSON.stringify(GA4BillingAddress) == JSON.stringify(GA4ShippingAddress)) {
+      userAddressData = GA4ShippingAddress
+    } else {
+      userAddressData = [GA4BillingAddress, GA4ShippingAddress]
+    }
+
+    let userData = {
+      ...(checkoutData.email ? { "email": checkoutData.email } : {}), // This will add the email key-value of checkoutData.email exists, and nothing otherwise. // We can also add in logic to have multiple emails in an array here.
+      ...(checkoutData.phone ? { "phone_number": convertToE164(checkoutData.phone) } : {}), // We can also add in logic to have multiple phones in an array here.
+      address: userAddressData
+    }
+
+    console.log('Final User Data before hashing (if any) is: ', userData)
+
+    // Modify data before sending to Google, if PII flag is true.
+    if (shouldHashPII) {
+      hashedUserData = transformPIIUserData(userData)
+      return hashedUserData
+    } else {
+      return userData
+    }
+  }
+
 // START EVENTS TRACKING
 analytics.subscribe("checkout_started", async (event) => {
     console.log('begin_checkout : ', event)
@@ -185,37 +217,12 @@ analytics.subscribe("checkout_completed", async (event) => {
     transformedData.shipping = checkoutData.shippingLine.price.amount
     transformedData.tax = checkoutData.totalTax.amount
 
-    //// Set User Data
-    const GA4BillingAddress = transformUserAddressData(checkoutData.billingAddress)
-    const GA4ShippingAddress = transformUserAddressData(checkoutData.shippingAddress)
-
-    console.log('GA4BillingAddress is: ', GA4BillingAddress)
-    console.log('GA4ShippingAddress is: ', GA4ShippingAddress)
-
-    let userAddressData; // init as empty to allow in definition of userData below
-    if (JSON.stringify(GA4BillingAddress) == JSON.stringify(GA4ShippingAddress)) {
-      userAddressData = GA4ShippingAddress
-    } else {
-      userAddressData = [GA4BillingAddress, GA4ShippingAddress]
-    }
-
-    let userData = {
-      ...(checkoutData.email ? { "email": checkoutData.email } : {}), // This will add the email key-value of checkoutData.email exists, and nothing otherwise. // We can also add in logic to have multiple emails in an array here.
-      ...(checkoutData.phone ? { "phone_number": convertToE164(checkoutData.phone) } : {}), // We can also add in logic to have multiple phones in an array here.
-      address: userAddressData
-    }
-
-    console.log('Final User Data before hashing is: ', userData)
-
-    // Modify data before sending to Google, if PII flag is true.
-    if (shouldHashPII) {
-      hashedUserData = await transformPIIUserData(userData)
-      console.log('Final User Data after hashing is: ', hashedUserData)
-      gtag('set', 'user_data', hashedUserData)
-    } else {
-      gtag('set', 'user_data', userData)
-    }
+    // Set the user data
+    processedUserData = await createUserData(checkoutData)
+    console.log('processedUserData is: ', processedUserData)
+    gtag('set', 'user_data', processedUserData)
 
     // Send the purchase event
+    console.log('transformedData (purchase) is: ', transformedData)
     gtag('event', 'purchase', transformedData);
 });
