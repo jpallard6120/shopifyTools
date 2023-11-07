@@ -15,6 +15,15 @@ function transformVariantToItem(variant, index = 0, quantity = 1) {
   };
 }
 
+// Shopify page_view
+analytics.subscribe("page_viewed", async (event) => {
+  parent.postMessage({
+    'message': 'shopify_pixel_event',
+    'event_name': 'page_view'
+  }, 
+  event.context.document.location.origin);
+})
+
 // Shopify: product_viewed -> GA4: view_item
 analytics.subscribe("product_viewed", async (event) => {
     const variant = event.data.productVariant
