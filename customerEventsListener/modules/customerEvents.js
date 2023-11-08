@@ -11,7 +11,7 @@ const customerEvents = () => {
         let eventsToClear = ['add_to_cart', 'remove_from_cart']
         if (typeof(event.data.event_name) !== 'undefined') {
           window.dataLayer = window.dataLayer || [];
-          pushData = {
+          let pushData = {
 	          event: event.data.event_name,
 	          ecommerce: ecomData
           }
