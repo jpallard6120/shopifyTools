@@ -18,7 +18,7 @@ gtag('set', {
 });
 gtag('js', new Date());
 gtag('config', measurementID, {
-  'send_page_view': false,
+  'send_page_view': false, // This can be true on multi-page checkout, and false on single page checkout. 
   'debug_mode': true, // REMOVE THIS FOR PROD
   'server_container_url': serverContainerURL,
   'allow_enhanced_conversions': true, // This needs to be true to send user data
@@ -184,7 +184,13 @@ function transformUserAddressData (inputObject) {
     }
   }
 
-// START EVENTS TRACKING
+//// START EVENTS TRACKING
+// Setting the correct page_path on the initial page_view. gtag set will apply to subsequent events.
+analytics.subscribe("page_viewed", async (event) => {
+  gtag('set', {'page_location': event.context.document.location.href});
+})
+
+
 analytics.subscribe("checkout_started", async (event) => {
     console.log('begin_checkout : ', event)
     const transformedData = transformCheckoutData(event.data.checkout);
