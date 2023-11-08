@@ -8,14 +8,19 @@ const customerEvents = () => {
         }
         // let events = ['view_item', 'view_item_list']
         // if (events.some(e => event.data.event_name.includes(e))) {
+        let eventsToClear = ['add_to_cart', 'remove_from_cart']
         if (typeof(event.data.event_name) !== 'undefined') {
           window.dataLayer = window.dataLayer || [];
-          window.dataLayer.push({
+          pushData = {
 	          event: event.data.event_name,
 	          ecommerce: ecomData
-          });
+          }
+          if (eventsToClear.includes(pushData.event)) {
+            pushData._clear = true
+          }
+          window.dataLayer.push(pushData);
           console.log('Event name is: ', event.data.event_name)
-          console.log('ecomData is: ', ecomData)
+          console.log('pushData is: ', pushData)
         }
     }
   });
