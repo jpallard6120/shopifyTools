@@ -232,7 +232,4 @@ analytics.subscribe("checkout_completed", async (event) => {
     // Send the purchase event
     console.log('transformedData (purchase) is: ', transformedData)
     gtag('event', 'purchase', transformedData);
-
-    // Right now, the page_location contains the location of the web pixel (ex. "https://fondussimo.com/wpm@8cdbea80w54e9ed17p4eb8965em48d1f985/web-pixel-633.....")
-    // We need to access the document or window object to fetch the actual page_location and include it as a param. 
 });
