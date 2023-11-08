@@ -109,7 +109,7 @@ analytics.subscribe("product_viewed", async (event) => {
     console.log('view_cart: ', event)
     function transformData(cartData) {
       const cartValue = cartData.cost.totalAmount.amount
-      const cartCurrency = cartData.cost.totalAmount.currency
+      const cartCurrency = cartData.cost.totalAmount.currencyCode
       const cartLines = cartData.lines
       let cartItems = []
       cartLines.forEach(cartLine => {
