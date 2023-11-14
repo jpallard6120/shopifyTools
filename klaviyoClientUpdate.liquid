@@ -1,0 +1,45 @@
+{% comment %}
+    Add this to checkout additional scripts to update the language property in Klaviyo
+    when a successful purchase is completed
+{% endcomment %}
+
+{% if first_time_accessed %}
+<script>
+    // Change this according to use case
+    const klaviyoPublicID = 'PUBLIC_ID_HERE'
+    const languageKey = 'language'; // Change this according to Klaviyo key used for language
+
+    // This populates automatically
+    const locale = Shopify.locale // Will output two letter code such as fr, en, etc. 
+    const customerEmail = Shopify.checkout.email
+
+    // Start Klaviyo Call
+    const attributes = {
+        email: customerEmail, 
+        properties: {
+            [languageKey]: locale
+            }
+        }
+
+    const options = {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          revision: '2023-10-15',
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          data: {
+            type: 'profile',
+            attributes: attributes
+          }
+        })
+      };
+      
+      fetch(`https://a.klaviyo.com/client/profiles/?company_id=${klaviyoPublicID}`, options)
+        .then(response => console.log('Success: ', response))
+        .catch(err => console.error('Error: ', err));
+</script>
+{% endif %}
+
+{% comment %} END Script to update language in Klaviyo {% endcomment %}
