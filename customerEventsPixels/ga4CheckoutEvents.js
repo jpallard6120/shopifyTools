@@ -46,7 +46,7 @@ function transformVariantToItem(variant, index = 0, quantity = 1) {
   // Transform Shopify checkout data structure to GA4 data structure
   function transformCheckoutData(checkoutData) {
     const checkoutValue = checkoutData.totalPrice.amount
-    const checkoutCurrency = checkoutData.currencyCode
+    const checkoutCurrency = checkoutData.totalPrice.currencyCode // The top level currencyCode defaults to the shop currency on purchase events, even if another currency is used for the order. totalPrice.currencyCode has the correct currency.
     const checkoutLines = checkoutData.lineItems
 
     let checkoutItems = []
