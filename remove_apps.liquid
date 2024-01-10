@@ -1,0 +1,39 @@
+{% comment %} Add before the content_for_header tag in theme.liquid  {% endcomment %}
+{% comment %} Assign urls_to_remove a number or range (as a string), for example: "1-11" where "0" will remove all apps. {% endcomment %}
+{% assign urls_to_remove = "0" %}
+{% assign remove_url_edges = urls_to_remove | split: '-' %}
+{% assign lines = content_for_header | newline_to_br | split: '<br />' %}
+{% for line in lines %}
+  {% if line contains 'var urls' %}
+    {% if urls_to_remove == "0" or urls_to_remove == 0 or remove_url_edges.size < 1 %}
+      {% comment %}Remove all apps{% endcomment %}
+      {% capture new_line %}
+      {% endcapture %}
+      {% assign empty_array = new_line | append: "var urls = [];" %}
+      {% assign content_for_header = content_for_header | replace: line, empty_array %}
+      {% assign url_string = line | remove: "var urls = [" | remove: "];" | strip %}
+      {% assign url_array = url_string | split: ',' | uniq %}
+      <script>
+        var styles = 'background: #1D1B1B; color: #CF9C2B; font-size: 1.2em;';
+        {% for url in url_array %}
+          console.log(`%cREMOVED APP {{ forloop.index }}/{{ url_array.size }} (⌐⊙_⊙)`, styles, `{{ url }}`);
+        {% endfor %}
+      </script>
+    {% else %}
+      {% comment %}Remove apps within urls_to_remove{% endcomment %}
+      {% assign url_string = line | remove: "var urls = [" | remove: "];" | strip %}
+      {% assign url_array = url_string | split: ',' | uniq %}
+      {% assign first_url_to_remove = remove_url_edges.first | plus: 0 %}
+      {% assign last_url_to_remove = remove_url_edges.last | plus: 0 %}
+        {% for url in url_array %}
+          {% if forloop.index >= first_url_to_remove and forloop.index <= last_url_to_remove %}
+            {% assign content_for_header = content_for_header | replace: url, '""' %}
+            <script>
+              var styles = 'background: #1D1B1B; color: #CF9C2B; font-size: 1.2em;';
+              console.log(`%cREMOVED APP {{ forloop.index }}/{{ url_array.size }} (⌐⊙_⊙)`, styles, `{{ url }}`);
+            </script>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
