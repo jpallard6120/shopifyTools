@@ -1,0 +1,37 @@
+{%- comment -%} 
+Example Feed: https://github.com/klaviyo/devportal/blob/master/custom_catalog_example.xml 
+Custom Feed Docs: https://developers.klaviyo.com/en/v1-2/docs/guide-to-syncing-a-custom-catalog-feed-to-klaviyo 
+This feed is built at the product level 
+{%- endcomment -%}
+{%- layout none -%}
+{%- capture feed -%}
+<?xml version="1.0"?>
+    {%- paginate collection.products by 1000 -%}
+    <Products>
+        {%- for product in collection.products -%}
+        {%-liquid 
+            assign total_inventory = 0
+            for variant in product.variants
+                if variant.inventory_management
+                    if variant.inventory_quantity >= 0
+                        assign total_inventory = total_inventory | plus: variant.inventory_quantity
+                    endif
+                endif
+            endfor
+        -%}
+        <Product>
+            <id>{{ product.id }}</id>
+            <title>{{ product.title }}</title>
+            <link>{{ shop.url }}{{ product.url }}</link>
+            <description>{{ product.description }}</description>
+            <price>{{ product.price | money_without_currency}}</price>
+            <image_link>{{ product.featured_image.src | product_img_url: 'master', format: 'jpg' }}</image_link>
+            <categories>{{ product.tags | join: ','}}</categories>
+            <inventory_quantity>{{ total_inventory }}</inventory_quantity>
+            <inventory_policy>2</inventory_policy>{%- comment -%} Product can be shown even if inventory is 0. Set to 1 if product should not be shown. {% endcomment %}
+        </Product>
+        {% endfor %}
+    </Products>
+    {%- endpaginate -%}
+{%- endcapture -%}
+{{- feed -}}

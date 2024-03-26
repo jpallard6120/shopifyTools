@@ -1,0 +1,23 @@
+{%- layout none -%}
+{%- capture feed -%}
+  <?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+    {%- paginate collection.products by 1000 -%}
+      <channel>
+      {%- for product in collection.products -%} 
+        {%- if product.variants.size > 0 -%}
+          {%- for variant in product.variants -%}     
+        <item>
+          <id>{{ variant.id }}</id>
+          <override>en_XX</override>
+          <title>{{ product.title | strip_html | strip_newlines | replace: '&', '&amp;' }}</title>
+          <description>{{ product.description | replace: '</', ' </' | strip_html | strip_newlines | replace: '&', '&amp;' }}</description>
+          <link>{{ shop.url }}{{ product.url }}</link>
+        </item>
+          {%- endfor -%}
+        {%- endif -%}
+      {%- endfor -%}
+      </channel>
+    </rss>
+    {%- endpaginate -%}
+{%- endcapture -%}
+{{- feed -}}
