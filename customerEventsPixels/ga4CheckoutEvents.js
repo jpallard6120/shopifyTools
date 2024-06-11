@@ -169,7 +169,7 @@ function transformUserAddressData (inputObject) {
 
     let userData = {
       ...(checkoutData.email ? { "email": checkoutData.email } : {}), // This will add the email key-value of checkoutData.email exists, and nothing otherwise. // We can also add in logic to have multiple emails in an array here.
-      ...(checkoutData.phone ? { "phone_number": convertToE164(checkoutData.phone) } : {}), // We can also add in logic to have multiple phones in an array here.
+      ...(checkoutData.shippingAddress.phone ? { "phone_number": convertToE164(checkoutData.shippingAddress.phone) } : {}), // We can also add in logic to have multiple phones in an array here.
       address: userAddressData
     }
 
