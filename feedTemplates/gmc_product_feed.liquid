@@ -1,0 +1,108 @@
+{% layout none %}<?xml version="1.0"?>
+    <rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+    {%- paginate collection.products by 1000 -%}
+    {%- assign CountryCode = 'US' -%}
+    {%- if shop.currency == 'CAD' -%}{%- assign CountryCode = 'CA' -%}{%- endif -%}
+    {%- assign PriceAdjustment = 1.0 -%}
+    {%- assign PriceAdjustmentEffectiveDate =  '20181226T080000-0500/20190102T235900-0800' -%}
+    
+    <channel>
+    <title>{{ shop.name }} {{ collection.title | replace: '&', '&amp;' }}</title>
+    <link>{{ shop.url }}</link>
+    <description>{{ collection.description | strip_html }}</description>
+    {%- for product in collection.products -%}
+      {%- assign GoogleProductCategory = product.metafields.mm-google-shopping.google_product_category -%}
+      {%- assign Gender = product.metafields.mm-google-shopping.gender -%}
+      {%- assign AgeGroup = product.metafields.mm-google-shopping.age_group -%}
+      {%- assign Color = "" -%}
+      {%- assign Size = "" -%}
+    
+      {%- if product.variants.size > 0 -%}
+      {%- for variant in product.variants -%}
+        {%- for option in product.options -%}
+            {%- if option == 'Color' -%}{% capture Color %}{{ variant.options[forloop.index0] }}{% endcapture %}
+            {%- elsif option == 'Size' -%}{% capture Size %}{{ variant.options[forloop.index0] }}{% endcapture %}
+            {%- endif -%}
+        {%- endfor -%}
+    
+        {% comment %} Calculate Sales vs Base Pricing {% endcomment %} 
+        {%- if variant.compare_at_price == blank or product.compare_at_price <= 0 -%}
+          {%- assign BasePrice = variant.price -%}
+        {%- else -%}
+          {%- assign BasePrice = variant.compare_at_price -%}
+        {%- endif -%}
+        {%- assign SalePrice = variant.price | times: PriceAdjustment -%}
+    
+    <item>
+    <title>{{ product.title | strip_html | strip_newlines | replace: '&', '&amp;' }} | {{ variant.option1  | strip_html | strip_newlines | replace: '&', '&amp;'}} - {{ variant.option2  | strip_html | strip_newlines | replace: '&', '&amp;'}}</title>
+    <link>{{ shop.url }}{{ variant.url }}</link>
+    <description>{{ product.title | strip_html | strip_newlines | replace: '&', '&amp;' }} {{ variant.title | strip_html | strip_newlines | replace: '&', '&amp;' }} {{ product.description | replace: '</', ' </' | strip_html | strip_newlines | replace: '&', '&amp;' }}</description>
+    <g:google_product_category>{{ GoogleProductCategory | replace: '&', '&amp;'  }}</g:google_product_category>
+    <g:item_group_id>{{ product.id }}</g:item_group_id>
+    <g:id>shopify_CA_{{ product.id }}_{{ variant.id }}</g:id>
+    <g:condition>new</g:condition>
+    <g:price>{{ BasePrice | money_without_currency }} {{ shop.currency }}</g:price>
+    {%- if SalePrice < BasePrice -%}<g:sale_price>{{ SalePrice  | money_without_currency }} {{ shop.currency }}</g:sale_price>{%-  endif -%}
+    {%- if PriceAdjustment < 1 -%}<g:sale_price_effective_date>{{ PriceAdjustmentEffectiveDate }}</g:sale_price_effective_date>{%- endif -%}
+    <g:availability>{% if variant.available %}in stock{% else %}out of stock{% endif %}</g:availability>
+    <g:inventory>{{ variant.inventory_quantity }}</g:inventory>
+    <g:image_link>http:{% if variant.image.src %}{{ variant.image.src | product_img_url: 'master', format: 'jpg' }}{% else %}{{ product.featured_image.src | product_img_url: 'master', format: 'jpg' }}{% endif %}</g:image_link>
+    <g:gtin>{{ variant.barcode }}</g:gtin>
+    <g:brand>{{ product.vendor }}</g:brand>
+    <g:mpn>{{ variant.sku }}</g:mpn>
+    <g:product_type>{{ product.type | replace: '&', '&amp;' }}</g:product_type>
+    <g:age_group>{{ AgeGroup }}</g:age_group>
+    {% unless Color == "" %}<g:color>{{ Color | strip_html | strip_newlines | replace: '&', '&amp;' }}</g:color>{% endunless %}
+    {% unless Size == "" %}<g:size>{{ Size | strip_html | strip_newlines | replace: '&', '&amp;' }}</g:size><g:size_system>US</g:size_system>{% endunless %}
+    <g:gender>{{ Gender }}</g:gender>
+    <g:custom_label_0>{{ variant.inventory_quantity }}</g:custom_label_0>
+    <g:custom_label_1>{{ product.metafields.mm-google-shopping.custom_label_1 }}</g:custom_label_1>
+    <g:custom_label_2>{{ product.metafields.mm-google-shopping.custom_label_2 }}</g:custom_label_2>
+    <g:custom_label_3>{{ product.metafields.mm-google-shopping.custom_label_3 }}</g:custom_label_3>
+    <g:custom_label_4>{{ product.metafields.mm-google-shopping.custom_label_4 }}</g:custom_label_4>
+    <g:shipping_weight>{{ variant.weight | weight_with_unit }}</g:shipping_weight>
+    </item>
+    
+      {% endfor %}
+      {% else %}
+    
+      {% comment %} Calculate Sales vs Base Pricing {% endcomment %} 
+      {%- if product.compare_at_price_min == blank or product.compare_at_price_min <= 0 -%}
+        {%- assign BasePrice = product.price -%}
+      {%- else -%}
+        {%- assign BasePrice = product.compare_at_price_min -%}
+      {%- endif -%}
+      {%- assign SalePrice = product.price | times: PriceAdjustment -%}
+    
+    <item>
+    <title>{{ product.title | strip_html | strip_newlines | replace: '&', '&amp;' }}</title>
+    <link>{{ shop.url }}{{ product.url }}</link>
+    <description>{{ product.title | strip_html | strip_newlines | replace: '&', '&amp;' }} {{ product.description | replace: '</', ' </' | strip_html | strip_newlines | replace: '&', '&amp;' }}</description>
+    <g:google_product_category>{{ GoogleProductCategory | replace: '&', '&amp;'  }}</g:google_product_category>
+    <g:item_group_id>{{ product.id }}</g:item_group_id>
+    <g:id>{{ product.id }}</g:id>
+    <g:condition>new</g:condition>
+    <g:price>{{ BasePrice | money_without_currency }} {{ shop.currency }}</g:price>
+    {%- if SalePrice < BasePrice -%}<g:sale_price>{{ SalePrice  | money_without_currency }} {{ shop.currency }}</g:sale_price>{%-  endif -%}
+    {%- if PriceAdjustment < 1 -%}<g:sale_price_effective_date>{{ PriceAdjustmentEffectiveDate }}</g:sale_price_effective_date>{%- endif -%}
+    <g:availability>{% if product.available %}in stock{% else %}out of stock{% endif %}</g:availability>
+    <g:inventory>{{ product.inventory_quantity }}</g:inventory>
+    <g:image_link>http:{{ product.featured_image.src | product_img_url: 'master', format: 'jpg' }}</g:image_link>
+    <g:gtin>{{ product.barcode }}</g:gtin>
+    <g:brand>{{ product.vendor }}</g:brand>
+    <g:mpn>{{ product.sku }}</g:mpn>
+    <g:product_type>{{ product.type }}</g:product_type>
+    <g:age_group>{{ AgeGroup }}</g:age_group>
+    <g:gender>{{ Gender }}</g:gender>
+    <g:custom_label_0>{{ variant.inventory_quantity }}</g:custom_label_0>
+    <g:custom_label_1>{{ product.metafields.mm-google-shopping.custom_label_1 }}</g:custom_label_1>
+    <g:custom_label_2>{{ product.metafields.mm-google-shopping.custom_label_2 }}</g:custom_label_2>
+    <g:custom_label_3>{{ product.metafields.mm-google-shopping.custom_label_3 }}</g:custom_label_3>
+    <g:custom_label_4>{{ product.metafields.mm-google-shopping.custom_label_4 }}</g:custom_label_4>
+    <g:shipping_weight>{{ variant.weight | weight_with_unit }}</g:shipping_weight>
+    </item>
+      {% endif %}
+    {% endfor %}
+    </channel>
+    </rss>
+    {% endpaginate %}

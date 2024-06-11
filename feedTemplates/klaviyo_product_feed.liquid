@@ -1,0 +1,48 @@
+{%- comment -%} 
+Example Feed: https://github.com/klaviyo/devportal/blob/master/custom_catalog_example.xml 
+Custom Feed Docs: https://developers.klaviyo.com/en/v1-2/docs/guide-to-syncing-a-custom-catalog-feed-to-klaviyo 
+This feed is built at the product level 
+{%- endcomment -%}
+{%- layout none -%}
+{%- capture feed -%}
+<?xml version="1.0"?>
+    {%- paginate collection.products by 1000 -%}
+    <Products>
+        {%- for product in collection.products -%}
+        {%-liquid 
+            assign total_inventory = 0
+            for variant in product.variants
+                if variant.inventory_management
+                    if variant.inventory_quantity >= 0
+                        assign total_inventory = total_inventory | plus: variant.inventory_quantity
+                    endif
+                endif
+            endfor
+           assign market = localization.language.iso_code | append: '_' | append: localization.country.iso_code | append: '_'
+           assign product_collections = product.collections | map:'title'
+        -%}
+        {%- capture market_product_collections -%}
+        {%- for product_collection in product_collections -%}{%- unless forloop.last -%}{{ product_collection | prepend: market | append: ',' }}{%- else -%}{{ product_collection | prepend: market }}{%- endunless -%}{%- endfor -%}
+        {%- endcapture -%}
+        <Product>
+            <id>{{ product.id }}</id>
+            <title>{{ product.title }}</title>
+            <link>{{ shop.url }}{{ product.url }}</link>
+            <description>{{ product.description | strip_html }}</description>
+            <price>{{ product.price | money_without_currency}}</price>
+            <image_link>{{ product.featured_image.src | product_img_url: 'master', format: 'jpg' }}</image_link>
+            <categories>{{ market_product_collections }}</categories>
+            <inventory_quantity>{{ total_inventory }}</inventory_quantity>
+            <inventory_policy>2</inventory_policy>{%- comment -%} Product can be shown even if inventory is 0. Set to 1 if product should not be shown. {% endcomment %}
+            <currency_name>{{ localization.country.currency.name }}</currency_name>
+            <country_name>{{ localization.country.name }}</country_name>
+            <language_name>{{ localization.language.name }}</language_name>
+            <currency_iso_code>{{ localization.country.currency.iso_code }}</currency_iso_code>
+            <country_iso_code>{{ localization.country.iso_code }}</country_iso_code>
+            <language_iso_code>{{ localization.language.iso_code }}</language_iso_code>
+        </Product>
+        {% endfor %}
+    </Products>
+    {%- endpaginate -%}
+{%- endcapture -%}
+{{- feed -}}
