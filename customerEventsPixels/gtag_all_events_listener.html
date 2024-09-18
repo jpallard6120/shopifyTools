@@ -1,0 +1,43 @@
+<!-- 
+ Add this to theme.liquid
+ Don't forget to change the measurement id within the script src and config 
+-->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ABCDE12345"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('set', {
+    'cookie_flags': 'SameSite=None;Secure'
+  });
+  gtag('js', new Date());
+
+  gtag('config', 'G-ABCDE12345', {
+    'send_page_view': false,
+    'debug_mode': true, // REMOVE THIS FOR PROD
+    'allow_enhanced_conversions': true, // This needs to be true to send user data
+    'allow_google_signals': true 
+  });
+
+  const customerEvents = () => {
+     addEventListener('message', (event) => {
+        if (event.data.source && event.data.source.includes("web-pixel-sandbox-CUSTOM-123456789")) {
+          let events = [
+            'page_view',
+            'begin_checkout',
+            'add_shipping_info', 
+            'add_payment_info',
+            'purchase',
+            'add_to_cart',
+            'view_cart',
+            'view_item',
+            'search',
+            'view_item_list'
+          ]
+          if (typeof(event.data.event_name) !== 'undefined' && events.includes(event.data.event_name)) {
+            gtag('event', event.data.event_name, event.data.payload);
+          }
+      }
+    });
+  }
+  customerEvents();
+</script>

@@ -1,9 +1,15 @@
+// This template will track all events on the same within a single pixel. 
+// Important caveat - it *does not work* with cross-domain tracking. 
+// This is due to the iframe sandbox within which the script is loaded from,
+// which prevents the link decoration technique within gtag to bubble up
+// to the top window. 
+// *** Remember to remove debug_mode below for prod ***
+
 // Variables to set for the whole script
 var measurementID = 'G-ABCDEF123456'
-// Remove debug_mode below for prod
+
 
 // Initialize gtag.js for subsequent events
-// This only works in a first party context, where the GA4 Client is sGTM is set to serve gtag.js
 const script = document.createElement('script');
 script.setAttribute('src', `https://www.googletagmanager.com/gtag/js?id=${measurementID}`);
 script.setAttribute('async', '');
@@ -63,7 +69,7 @@ function createItemsArray(lines) {
   return items;
 }
 
-//subscribe to events
+// THEME AND CHECKOUT EVENTS
 analytics.subscribe("page_viewed", async (event) => {
   const url = event.context.document.location.href
   if (!url.endsWith("/processing")) { // Avoid extra pageviews from processing step in checkout
@@ -75,6 +81,7 @@ analytics.subscribe("page_viewed", async (event) => {
   }
 })
 
+// CHECKOUT EVENTS
 analytics.subscribe("checkout_started", (event) => {
   const items = createItemsArray(event.data.checkout.lineItems);
   const payload = {
@@ -122,6 +129,7 @@ analytics.subscribe("checkout_completed", (event) => {
   gtag('event', 'purchase', payload);
 });
 
+// THEME EVENTS
 analytics.subscribe("product_added_to_cart", (event) => {
   const variant = event.data?.cartLine?.merchandise
   const item = transformVariantToItem(variant)
