@@ -1,0 +1,35 @@
+### Query
+mutation priceListFixedPricesAdd(
+  $priceListId: ID!,
+  $prices: [PriceListPriceInput!]!
+) {
+  priceListFixedPricesAdd(priceListId: $priceListId, prices: $prices) {
+    prices {
+      variant {
+        id
+      }
+    }
+    userErrors {
+      field
+      message
+    }
+  }
+}
+
+### Variables Example
+{
+  "priceListId": "gid://shopify/PriceList/30874337571",
+  "prices": [
+    {
+      "variantId": "gid://shopify/ProductVariant/46619937669411",
+      "price": {
+        "amount": "164.49",
+        "currencyCode": "USD"
+      },
+      "compareAtPrice": {
+        "amount": "234.99",
+        "currencyCode": "USD"
+      }
+    }
+  ]
+}

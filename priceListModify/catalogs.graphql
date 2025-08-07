@@ -1,0 +1,18 @@
+query Catalogs {
+  catalogs(first: 99, type: MARKET) {
+    nodes {
+      id
+      status
+      priceList { id }
+      publication { id }
+      ... on MarketCatalog {
+        markets(first: 1) {
+          nodes {
+            id
+            name
+          }
+        }
+      }
+     }
+  }
+}
