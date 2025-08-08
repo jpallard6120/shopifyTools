@@ -4,13 +4,15 @@
 // Cross-domain will not work within checkout, but I don't see any use case
 // to send to another domain within checkout. 
 
-// *** Remember to remove debug_mode below for prod ***
+// SET THESE VARIABLES WITH YOUR OWN VALUES
+const measurementID = 'G-ABCDE12345' // SET THIS WITH YOUR OWN ID
+const consentModeGranted = false; // Set to true if you want to enable consent mode as granted by default, false otherwise
+const debug_mode = true; // Set to true for debugging, false for production
 
 // Check if currently within checkout
 const inCheckout = init.context.document.location.href.includes('/checkouts/');
 
-// Initialize gtag.js 
-const measurementID = 'G-ABCDE12345' // SET THIS WITH YOUR OWN ID
+// Don't change anything below
 
 const script = document.createElement('script');
 script.setAttribute('src', `https://www.googletagmanager.com/gtag/js?id=${measurementID}`);
@@ -21,27 +23,28 @@ window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 
 // Configure gtag only within checkout
-if (inCheckout) {
-  gtag('set', {
-  'cookie_flags': 'SameSite=None;Secure'
+  if (inCheckout) {
+    gtag('set', {
+    'cookie_flags': 'SameSite=None;Secure'
   });
 
   gtag('js', new Date());
   gtag('config', measurementID, {
     'send_page_view': false,
-    'debug_mode': true, // REMOVE THIS FOR PROD
+    ...(debug_mode && { 'debug_mode': true }),
     'allow_enhanced_conversions': true, // This needs to be true to send user data
     'allow_google_signals': true 
   });
 
-
-  //Google Consent Mode v2
-  gtag('consent', 'update', {
-    'ad_storage': 'granted',
-    'analytics_storage': 'granted',
-    'ad_user_data': 'granted',
-    'ad_personalization': 'granted',
-  });
+  if (consentModeGranted) {
+    //Google Consent Mode v2
+    gtag('consent', 'update', {
+      'ad_storage': 'granted',
+      'analytics_storage': 'granted',
+      'ad_user_data': 'granted',
+      'ad_personalization': 'granted',
+    });
+  }
 }
 //// FUNCTIONS DEFINITIONS
 // Transforms Shopify items data schema to GA4 items schema
@@ -90,7 +93,7 @@ const shopifyToGA4 = {
 // THEME AND CHECKOUT EVENTS
 analytics.subscribe("page_viewed", async (event) => {
   const url = event.context.document.location.href
-  payload = {
+  const payload = {
     page_title: event.context.document.title,
     page_location: url
   }
@@ -190,7 +193,8 @@ if (inCheckout) {
       'event_name': shopifyToGA4[event.name],
       'payload': payload
     }, 
-    event.context.document.location.origin);  });
+    event.context.document.location.origin);  
+  });
 
   analytics.subscribe("product_viewed", (event) => {
     const variant = event.data?.productVariant

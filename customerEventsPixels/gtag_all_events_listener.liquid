@@ -1,0 +1,60 @@
+{% comment %}
+ Add this to theme.liquid
+{% endcomment %}
+
+{% comment %} **** Modify values here **** {% endcomment %}
+{% assign measurementId = "G-ABCDE12345" %} {% comment %} Replace with your actual measurement ID {% endcomment %}
+{% assign pixelId = "123456789" %} {% comment %} Replace with your actual pixel ID (available in URL within Shopify admin) {% endcomment %}
+{% assign debugMode = true %} {% comment %} Set to true for debugging, false for production {% endcomment %}
+{% assign consentModeGranted = false %} {% comment %} Set to true if you want to enable consent mode as granted by default, false otherwise {% endcomment %}
+
+{% comment %} Don't change anything below {% endcomment %}
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ measurementId }}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('set', {
+    'cookie_flags': 'SameSite=None;Secure'
+  });
+  gtag('js', new Date());
+
+  gtag('config', '{{ measurementId }}', {
+    'send_page_view': false,
+    {% if debugMode %}'debug_mode': true,{% endif %}
+    'allow_enhanced_conversions': true,
+    'allow_google_signals': true 
+  });
+
+  {% if consentModeGranted %}
+    //Google Consent Mode v2
+    gtag('consent', 'update', {
+      'ad_storage': 'granted',
+      'analytics_storage': 'granted',
+      'ad_user_data': 'granted',
+      'ad_personalization': 'granted',
+    });
+  {% endif %}
+
+  const customerEvents = () => {
+     addEventListener('message', (event) => {
+        if (event.data.source && event.data.source.includes("web-pixel-sandbox-CUSTOM-{{ pixelId }}")) {
+          let events = [
+            'page_view',
+            'begin_checkout',
+            'add_shipping_info', 
+            'add_payment_info',
+            'purchase',
+            'add_to_cart',
+            'view_cart',
+            'view_item',
+            'search',
+            'view_item_list'
+          ]
+          if (typeof(event.data.event_name) !== 'undefined' && events.includes(event.data.event_name)) {
+            gtag('event', event.data.event_name, event.data.payload);
+          }
+      }
+    });
+  }
+  customerEvents();
+</script>
