@@ -1,3 +1,6 @@
+// GA4 Client should be set to javascript cookies if using sGTM
+// See https://www.simoahava.com/analytics/cookie-access-with-shopify-checkout-sgtm/#what-about-google-analytics-4
+
 // Variables to set for the whole script
 var shouldHashPII = false
 
