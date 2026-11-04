@@ -7,7 +7,8 @@ required consent for Analytics and Marketing, then Save, Test, and Connect.
 This subscribes to successful cart additions and forwards native-style product
 properties to the main storefront. The theme listener adds locale and calls
 Klaviyo.js, which handles visitor identification. No API key is needed here.
-Categories and CompareAtPrice are absent from Shopify's cart event and omitted.
+The theme listener looks up CompareAtPrice and adds extra.standard metadata.
+Categories are omitted. Product Name is the product title, without the variant.
 */
 
 (() => {
@@ -65,8 +66,6 @@ Categories and CompareAtPrice are absent from Shopify's cart event and omitted.
       }).resolvedOptions().maximumFractionDigits;
       const value = Number((price * quantity).toFixed(decimals));
       const page = new URL(event.context.document.location.href);
-      const hasVariantName = variant.title && variant.title !== 'Default Title'
-        && variant.untranslatedTitle !== 'Default Title';
 
       forward({
         channel,
@@ -80,7 +79,7 @@ Categories and CompareAtPrice are absent from Shopify's cart event and omitted.
           ImageURL: absoluteUrl(variant.image?.src, page.origin),
           URL: absoluteUrl(product.url, page.origin, true),
           'Client ID': event.clientId,
-          'Product Name': hasVariantName ? `${product.title} - ${variant.title}` : product.title,
+          'Product Name': product.title,
           Price: price,
           ProductID: shopifyId(product.id),
           Quantity: quantity,
